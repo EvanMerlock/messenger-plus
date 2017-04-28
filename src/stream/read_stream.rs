@@ -48,6 +48,43 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
     }
 }
 
+/// Determines if a given Vector contains a given slice
+///
+/// # Arguments
+/// 
+/// * `vec` - a vector that may contain the given slice
+/// * `slice` - a slice that the vector may contain
+///
+/// # Examples
+/// Given a vector
+///
+/// ```
+/// let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// ```
+///
+/// These will return true:
+///
+/// ```
+/// # extern crate messenger_plus;
+/// # fn main() {
+/// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// assert!(messenger_plus::read_stream::vec_contains_slice(&vec, &[2, 13, 17]));
+/// assert!(messenger_plus::read_stream::vec_contains_slice(&vec, &[1, 6, 9]));
+/// # }
+/// ```
+///
+/// These will return false:
+///
+/// ```
+/// # extern crate messenger_plus;
+/// # fn main() {
+/// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// assert!(!messenger_plus::read_stream::vec_contains_slice(&vec, &[2, 2, 17]));
+/// assert!(!messenger_plus::read_stream::vec_contains_slice(&vec, &[]));
+/// assert!(!messenger_plus::read_stream::vec_contains_slice(&Vec::new(), &[2, 2]));
+/// assert!(!messenger_plus::read_stream::vec_contains_slice::<i32>(&Vec::new(), &[]));
+/// # }
+/// ```
 pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + PartialEq {
     let mut clone_vec: Vec<T> = vec.clone();
 
