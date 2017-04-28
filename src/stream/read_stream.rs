@@ -1,5 +1,4 @@
 use std::io::{Read};
-use std::fmt::Debug;
 
 pub fn read_next_message<T>(mut stream: T, boundary_start: &str, boundary_end: &str) -> Option<Vec<u8>> where T: Read {
     let mut buffer = [0; 1];
@@ -43,7 +42,7 @@ pub fn read_next_message<T>(mut stream: T, boundary_start: &str, boundary_end: &
     }
 }
 
-pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + PartialEq + Debug {
+pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + PartialEq {
     let mut clone_vec: Vec<T> = vec.clone();
 
     if slice.is_empty() || vec.is_empty() {
@@ -63,7 +62,7 @@ pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + 
     false
 }
 
-pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq + Debug {
+pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq {
     let mut clone_vec: Vec<T> = vec.clone();
 
     if slice.is_empty() || vec.is_empty() {
@@ -83,6 +82,6 @@ pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize
     None
 }
 
-pub fn find_where_slice_begins<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq + Debug {
+pub fn find_where_slice_begins<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq {
     find_where_slice_intersects(vec, slice).map(|x| x - slice.len())
 }
