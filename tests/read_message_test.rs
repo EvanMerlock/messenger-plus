@@ -40,7 +40,7 @@ fn read_next_message_test() {
     let payload_one = "payload_one";
     let mut data = RandomRead::new(payload_one, 1);
 
-    assert_eq!(messenger_plus::read_stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
+    assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
 }
 
 #[test]
@@ -48,7 +48,7 @@ fn special_characters_test() {
     let payload_one = "!@#$%^&*()_+-=[]{}|;:/?><";
     let mut data = RandomRead::new(payload_one, 1);
 
-    assert_eq!(messenger_plus::read_stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
+    assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
 }
 
 #[test]
@@ -59,12 +59,12 @@ fn read_multiple_payloads_test() {
 
 
     for _ in 0..num_payloads {
-        assert_eq!(messenger_plus::read_stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
+        assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
     }
 }
 
 #[test]
 fn read_empty_payload_test() {
     let mut data = RandomRead::new("", 0);
-    assert_eq!(messenger_plus::read_stream::read_next_message(&mut data, "--boundary", "--endboundary"), None);
+    assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), None);
 }

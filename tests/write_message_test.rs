@@ -36,7 +36,7 @@ impl Write for RandomWrite {
 fn writes_message_properly() {
     let mut writer = RandomWrite::new();
     {
-        let mut message_writer = messenger_plus::write_stream::MessageWriter::new(String::from("--boundary"), String::from("--endboundary"), &mut writer);
+        let mut message_writer = messenger_plus::stream::MessageWriter::new(String::from("--boundary"), String::from("--endboundary"), &mut writer);
         let _ = message_writer.write(b"hello, world!");
     }
 

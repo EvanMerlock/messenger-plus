@@ -85,8 +85,8 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
 /// # extern crate messenger_plus;
 /// # fn main() {
 /// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
-/// assert!(messenger_plus::read_stream::vec_contains_slice(&vec, &[2, 13, 17]));
-/// assert!(messenger_plus::read_stream::vec_contains_slice(&vec, &[1, 6, 9]));
+/// assert!(messenger_plus::stream::vec_contains_slice(&vec, &[2, 13, 17]));
+/// assert!(messenger_plus::stream::vec_contains_slice(&vec, &[1, 6, 9]));
 /// # }
 /// ```
 ///
@@ -96,10 +96,10 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
 /// # extern crate messenger_plus;
 /// # fn main() {
 /// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
-/// assert!(!messenger_plus::read_stream::vec_contains_slice(&vec, &[2, 2, 17]));
-/// assert!(!messenger_plus::read_stream::vec_contains_slice(&vec, &[]));
-/// assert!(!messenger_plus::read_stream::vec_contains_slice(&Vec::new(), &[2, 2]));
-/// assert!(!messenger_plus::read_stream::vec_contains_slice::<i32>(&Vec::new(), &[]));
+/// assert!(!messenger_plus::stream::vec_contains_slice(&vec, &[2, 2, 17]));
+/// assert!(!messenger_plus::stream::vec_contains_slice(&vec, &[]));
+/// assert!(!messenger_plus::stream::vec_contains_slice(&Vec::new(), &[2, 2]));
+/// assert!(!messenger_plus::stream::vec_contains_slice::<i32>(&Vec::new(), &[]));
 /// # }
 /// ```
 pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + PartialEq {
@@ -142,8 +142,8 @@ pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + 
 /// # extern crate messenger_plus;
 /// # fn main() {
 /// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_intersects(&vec, &[2, 13, 17]), Some(7));
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_intersects(&vec, &[1, 6, 9]), Some(3));
+/// assert_eq!(messenger_plus::stream::find_where_slice_intersects(&vec, &[2, 13, 17]), Some(7));
+/// assert_eq!(messenger_plus::stream::find_where_slice_intersects(&vec, &[1, 6, 9]), Some(3));
 /// # }
 /// ```
 ///
@@ -153,10 +153,10 @@ pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + 
 /// # extern crate messenger_plus;
 /// # fn main() {
 /// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_intersects(&vec, &[2, 2, 17]), None);
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_intersects(&vec, &[]), None);
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_intersects(&Vec::new(), &[2, 2]), None);
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_intersects::<i32>(&Vec::new(), &[]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_intersects(&vec, &[2, 2, 17]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_intersects(&vec, &[]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_intersects(&Vec::new(), &[2, 2]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_intersects::<i32>(&Vec::new(), &[]), None);
 /// # }
 /// ```
 pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq {
@@ -199,8 +199,8 @@ pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize
 /// # extern crate messenger_plus;
 /// # fn main() {
 /// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[2, 13, 17]), Some(4));
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[1, 6, 9]), Some(0));
+/// assert_eq!(messenger_plus::stream::find_where_slice_begins(&vec, &[2, 13, 17]), Some(4));
+/// assert_eq!(messenger_plus::stream::find_where_slice_begins(&vec, &[1, 6, 9]), Some(0));
 /// # }
 /// ```
 ///
@@ -210,10 +210,10 @@ pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize
 /// # extern crate messenger_plus;
 /// # fn main() {
 /// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[2, 2, 17]), None);
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[]), None);
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&Vec::new(), &[2, 2]), None);
-/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins::<i32>(&Vec::new(), &[]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_begins(&vec, &[2, 2, 17]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_begins(&vec, &[]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_begins(&Vec::new(), &[2, 2]), None);
+/// assert_eq!(messenger_plus::stream::find_where_slice_begins::<i32>(&Vec::new(), &[]), None);
 /// # }
 /// ```
 pub fn find_where_slice_begins<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq {

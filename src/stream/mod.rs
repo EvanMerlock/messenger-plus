@@ -1,2 +1,5 @@
-pub mod read_stream;
-pub mod write_stream;
+mod read_stream;
+mod write_stream;
+
+pub use self::read_stream::*;
+pub use self::write_stream::*;

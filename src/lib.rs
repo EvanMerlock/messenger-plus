@@ -1,3 +1,1 @@
-mod stream;
-
-pub use self::stream::*;
+pub mod stream;
