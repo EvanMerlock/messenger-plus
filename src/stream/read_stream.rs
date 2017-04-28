@@ -23,13 +23,10 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
             // look for ending, accumulate message
             if vec_contains_slice(&message, boundary_end.as_ref()) {
                 // end code found! filter it out and send the message!
-                println!("end code found!");
                 if let Some(v) = find_where_slice_begins(&message, boundary_end.as_ref()) {
-                    println!("found boundary slice");
                     let _ = message.split_off(v as usize);
                     return Some(message);
                 }
-                println!("didn't find the boundary slice");
             }
         } else {
             // beginning message NOT found, look for it
@@ -37,7 +34,6 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
             if vec_contains_slice(&search_vec, boundary_start.as_ref()) {
                 // grab everything after, then push it into the message buffer
                 if let Some(v) = find_where_slice_intersects(&search_vec, boundary_start.as_ref()) {
-                    println!("found beginning");
                     message.append(&mut search_vec.split_off(v as usize));
                     beginning_found = true;
                     search_vec.clear();
