@@ -1,5 +1,19 @@
 use std::io::{Read};
 
+/// Reads the next message from any Reader
+///
+/// This method reads the next message in any given reader.
+/// The message is formatted with 2 boundaries. The first boundary is defined in boundary_start, and the second is defined in boundary_end.
+///
+/// # Arguments
+/// * `stream` - a `Read` trait-object that the message will be read from
+/// * `boundary_start` - the marker of the beginning of the message. Ensure this is unique and will not be contained within the message!
+/// * `boundary_end` - the marker of the end of the message. Ensure this is unique and will not be contained within the message!
+///
+/// # Errors
+/// This method will return None if it cannot find a message and the stream ends (typically due to EOF).
+/// This method can hang if no new data is sent through the pipe as `Read` can block.
+/// This method can produce irratic results if the `boundary_start` or `boundary_end` is found within the message.
 pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: &str) -> Option<Vec<u8>> where T: Read {
 
     let mut buffer = [0; 1];
