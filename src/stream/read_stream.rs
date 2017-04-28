@@ -16,16 +16,20 @@ use std::io::{Read};
 /// This method can produce irratic results if the `boundary_start` or `boundary_end` is found within the message.
 pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: &str) -> Option<Vec<u8>> where T: Read {
 
+    // initializes a buffer for bytes coming from the reader
     let mut buffer = [0; 1];
+    // initializes the message buffer for containing the final message
     let mut message: Vec<u8> = Vec::new();
+    // initializes the search buffer for placing data the program is currently searching through
     let mut search_vec: Vec<u8> = Vec::new();
-
-
+    // whether or not the boundary_start has been found
     let mut beginning_found = false;
 
     loop {
+        // read the provided stream
         let res = stream.read(&mut buffer);
 
+        // If no bytes have been sent, return None. We probably reached the end of the stream.
         if let Ok(v) = res {
             if v <= 0 {
                 return None;
@@ -33,10 +37,10 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
         }
 
         if beginning_found {
-            message.append(&mut Vec::from(buffer.as_ref()));
             // look for ending, accumulate message
+            message.append(&mut Vec::from(buffer.as_ref()));
             if vec_contains_slice(&message, boundary_end.as_ref()) {
-                // end code found! filter it out and send the message!
+                // end code found. filter it out and send the message.
                 if let Some(v) = find_where_slice_begins(&message, boundary_end.as_ref()) {
                     let _ = message.split_off(v as usize);
                     return Some(message);
@@ -48,8 +52,11 @@ pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: 
             if vec_contains_slice(&search_vec, boundary_start.as_ref()) {
                 // grab everything after, then push it into the message buffer
                 if let Some(v) = find_where_slice_intersects(&search_vec, boundary_start.as_ref()) {
+                    // append the remainder found that isn't the boundary as part of the message
                     message.append(&mut search_vec.split_off(v as usize));
+                    // mark the beginning of found
                     beginning_found = true;
+                    // clear the search vector
                     search_vec.clear();
                 }
             } 
