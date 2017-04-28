@@ -1,6 +1,7 @@
 use std::io::{Read};
 
-pub fn read_next_message<T>(mut stream: T, boundary_start: &str, boundary_end: &str) -> Option<Vec<u8>> where T: Read {
+pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: &str) -> Option<Vec<u8>> where T: Read {
+
     let mut buffer = [0; 1];
     let mut message: Vec<u8> = Vec::new();
     let mut search_vec: Vec<u8> = Vec::new();
@@ -9,29 +10,34 @@ pub fn read_next_message<T>(mut stream: T, boundary_start: &str, boundary_end: &
     let mut beginning_found = false;
 
     loop {
-        let _ = stream.read(&mut buffer);
+        let res = stream.read(&mut buffer);
+
+        if let Ok(v) = res {
+            if v <= 0 {
+                return None;
+            }
+        }
 
         if beginning_found {
+            message.append(&mut Vec::from(buffer.as_ref()));
             // look for ending, accumulate message
-            if !vec_contains_slice(&message, boundary_end.as_ref()) {
-                message.append(&mut search_vec);
-            } else {
+            if vec_contains_slice(&message, boundary_end.as_ref()) {
                 // end code found! filter it out and send the message!
-                println!("found end of message");
+                println!("end code found!");
                 if let Some(v) = find_where_slice_begins(&message, boundary_end.as_ref()) {
+                    println!("found boundary slice");
                     let _ = message.split_off(v as usize);
                     return Some(message);
                 }
-                println!("didn't find where slice began");
+                println!("didn't find the boundary slice");
             }
-            search_vec.append(&mut Vec::from(buffer.as_ref()));
         } else {
             // beginning message NOT found, look for it
             search_vec.append(&mut Vec::from(buffer.as_ref()));
             if vec_contains_slice(&search_vec, boundary_start.as_ref()) {
                 // grab everything after, then push it into the message buffer
                 if let Some(v) = find_where_slice_intersects(&search_vec, boundary_start.as_ref()) {
-                    println!("found beginning!");
+                    println!("found beginning");
                     message.append(&mut search_vec.split_off(v as usize));
                     beginning_found = true;
                     search_vec.clear();
