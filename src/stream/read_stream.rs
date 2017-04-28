@@ -158,6 +158,43 @@ pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize
     None
 }
 
+/// Returns the index of the element BEFORE the slice if the slice exists within the vector
+///
+/// # Arguments
+/// * `vec` - a vector that may contain the given slice
+/// * `slice` - a slice that may be contained within the given vector
+///
+/// # Examples
+///
+/// Given a vector
+///
+/// ```
+/// let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// ```
+///
+/// These will return Some and a number relating to the location:
+///
+/// ```
+/// # extern crate messenger_plus;
+/// # fn main() {
+/// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[2, 13, 17]), Some(4));
+/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[1, 6, 9]), Some(0));
+/// # }
+/// ```
+///
+/// These will return None:
+///
+/// ```
+/// # extern crate messenger_plus;
+/// # fn main() {
+/// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[2, 2, 17]), None);
+/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&vec, &[]), None);
+/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins(&Vec::new(), &[2, 2]), None);
+/// assert_eq!(messenger_plus::read_stream::find_where_slice_begins::<i32>(&Vec::new(), &[]), None);
+/// # }
+/// ```
 pub fn find_where_slice_begins<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq {
     find_where_slice_intersects(vec, slice).map(|x| x - slice.len())
 }
