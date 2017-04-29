@@ -78,6 +78,10 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
             }
         }
     }
+
+    pub fn release(mut self) -> &'a mut T {
+        self.channel
+    }
 }
 
 impl<'a, T> Write for DualMessenger<'a, T> where T: Read + Write {
