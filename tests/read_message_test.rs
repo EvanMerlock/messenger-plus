@@ -68,3 +68,12 @@ fn read_empty_payload_test() {
     let mut data = RandomRead::new("", 0);
     assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), None);
 }
+
+#[test]
+fn message_reader_test() {
+    let mut random_reader = RandomRead::new("hello, world!", 1);
+    let mut message_reader = messenger_plus::stream::MessageReader::new(String::from("--boundary"), String::from("--endboundary"), &mut random_reader);
+
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), None);
+}

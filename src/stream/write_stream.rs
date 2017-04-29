@@ -7,6 +7,10 @@ pub struct MessageWriter<'a> {
 }
 
 impl<'a> MessageWriter<'a> {
+
+    /// Initializes a new MessageWriter
+    ///
+    /// MessagerWriters write to a given `Write` trait-object given the provided boundaries 
     pub fn new(beg_bound: String, end_bound: String, writer: &mut Write) -> MessageWriter {
         MessageWriter {
             beginning_boundary: beg_bound,
