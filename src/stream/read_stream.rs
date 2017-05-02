@@ -297,3 +297,87 @@ pub fn find_where_slice_intersects<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize
 pub fn find_where_slice_begins<T>(vec: &Vec<T>, slice: &[T]) -> Option<usize> where T: Copy + PartialEq {
     find_where_slice_intersects(vec, slice).map(|x| x - slice.len())
 }
+
+/// Returns all items between two given slices of items
+///
+/// # Arguments
+/// * `vec` - the vector that may contain items between two delimiter slices
+/// * `delimiter_slice` - the beginning of the delimiter
+/// * `slice` - the end of the delimiter
+///
+/// # Examples
+///
+/// Given a vector
+///
+/// ```
+/// let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// ```
+///
+/// These will return Some and a slice of all the elements in between:
+///
+/// ```
+/// # extern crate messenger_plus;
+/// # fn main() {
+/// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&vec, &[2], &[18]), Some(vec![13, 17]));
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&vec, &[1], &[9]), Some(vec![6]));
+/// # }
+/// ```
+///
+/// These will return None:
+///
+/// ```
+/// # extern crate messenger_plus;
+/// # fn main() {
+/// # let vec = vec![1, 6, 9, 0, 2, 13, 17, 18];
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&vec, &[2], &[3]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&vec, &[1], &[1]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&vec, &[], &[6]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&vec, &[1], &[]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&Vec::new(), &[1], &[1]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&Vec::new(), &[1], &[]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters(&Vec::new(), &[], &[1]), None);
+/// assert_eq!(messenger_plus::stream::locate_items_between_delimiters::<i32>(&Vec::new(), &[], &[]), None);
+/// # }
+/// ```
+pub fn locate_items_between_delimiters<T>(vec: &Vec<T>, delimiter_slice: &[T], slice: &[T]) -> Option<Vec<T>> where T: Copy + PartialEq {
+    let mut clone_vec: Vec<T> = vec.clone();
+    let mut delimiter_found = false;
+    let mut delimiter_location: usize = 0;
+
+    if slice.is_empty() || vec.is_empty() || delimiter_slice.is_empty() {
+        return None;
+    }
+
+    for i in 0..vec.len() {
+
+        if !delimiter_found {
+            if vec[i] == delimiter_slice[0] {
+                let mut cont_vec = clone_vec.split_off(i);
+                if cont_vec.starts_with(delimiter_slice) {
+                    delimiter_found = true;
+                    delimiter_location = i;
+                    clone_vec.append(&mut cont_vec);
+                    continue;
+                }
+                clone_vec.append(&mut cont_vec);
+            }
+        } else {
+            if vec[i] == slice[0] {
+                let mut cont_vec = clone_vec.split_off(i);
+                if cont_vec.starts_with(slice) {
+                    let mut new_vec: Vec<T> = Vec::new();
+                    for x in 0..vec.len() {
+                        if x > delimiter_location && x < i {
+                            new_vec.push(clone_vec[x]);
+                        }
+                    }
+                    return Some(new_vec);
+                }
+                clone_vec.append(&mut cont_vec);
+            }
+        }
+    }
+
+    None
+}
