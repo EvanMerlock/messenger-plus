@@ -1,6 +1,7 @@
 extern crate messenger_plus;
 
 use std::io;
+use std::mem;
 
 #[derive(Debug)]
 struct RandomRead {
@@ -13,8 +14,10 @@ impl RandomRead {
         let mut data: Vec<u8> = Vec::new();
         for _ in 0..num_payloads {
             data.append(&mut Vec::from("--boundary"));
+            data.append(&mut Vec::from(mem::size_of_val(message.as_bytes()).to_string().as_bytes()));
+            data.append(&mut Vec::from("--"));
             data.append(&mut Vec::from(message));
-            data.append(&mut Vec::from("--endboundary"));
+            data.append(&mut Vec::from("--endboundary--"));
         }
         RandomRead {
             info: data,
@@ -40,15 +43,18 @@ fn read_next_message_test() {
     let payload_one = "payload_one";
     let mut data = RandomRead::new(payload_one, 1);
 
-    assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
+    let mut message_reader: messenger_plus::stream::MessageReader = messenger_plus::stream::MessageReader::new(String::from("--"), String::from("boundary"), String::from("endboundary"), &mut data);
+
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from(payload_one)));
 }
 
 #[test]
 fn special_characters_test() {
     let payload_one = "!@#$%^&*()_+-=[]{}|;:/?><";
     let mut data = RandomRead::new(payload_one, 1);
+    let mut message_reader: messenger_plus::stream::MessageReader = messenger_plus::stream::MessageReader::new(String::from("--"), String::from("boundary"), String::from("endboundary"), &mut data);
 
-    assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from(payload_one)));
 }
 
 #[test]
@@ -57,23 +63,17 @@ fn read_multiple_payloads_test() {
     let num_payloads = 3;
     let mut data = RandomRead::new(payload_one, num_payloads);
 
+    let mut message_reader: messenger_plus::stream::MessageReader = messenger_plus::stream::MessageReader::new(String::from("--"), String::from("boundary"), String::from("endboundary"), &mut data);
 
     for _ in 0..num_payloads {
-        assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), Some(Vec::from(payload_one)));
+        assert_eq!(message_reader.read_next_message(), Some(Vec::from(payload_one)));
     }
 }
 
 #[test]
 fn read_empty_payload_test() {
     let mut data = RandomRead::new("", 0);
-    assert_eq!(messenger_plus::stream::read_next_message(&mut data, "--boundary", "--endboundary"), None);
-}
+    let mut message_reader: messenger_plus::stream::MessageReader = messenger_plus::stream::MessageReader::new(String::from("--"), String::from("boundary"), String::from("endboundary"), &mut data);
 
-#[test]
-fn message_reader_test() {
-    let mut random_reader = RandomRead::new("hello, world!", 1);
-    let mut message_reader = messenger_plus::stream::MessageReader::new(String::from("--boundary"), String::from("--endboundary"), &mut random_reader);
-
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
     assert_eq!(message_reader.read_next_message(), None);
 }

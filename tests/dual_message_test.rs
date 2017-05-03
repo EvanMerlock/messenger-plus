@@ -47,23 +47,26 @@ impl Read for RandomReadWrite {
 #[test]
 fn dual_messenger_test() {
     let mut random_reader = RandomReadWrite::new();
-    let mut message_reader = messenger_plus::stream::DualMessenger::new(String::from("--boundary"), String::from("--endboundary"), &mut random_reader);
+    let mut message_reader = messenger_plus::stream::DualMessenger::new(String::from("--"), String::from("bound"), String::from("endbound"), &mut random_reader);
+    let buf: &[u8] = "hello, world!".as_ref();
 
-    assert_eq!(message_reader.write(b"hello, world").unwrap(), Vec::from("--boundaryhello, world--endboundary").len());
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world")));
+
+    assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
     assert_eq!(message_reader.read_next_message(), None);
 }
 
 #[test]
 fn dual_message_multi_test() {
     let mut random_reader = RandomReadWrite::new();
-    let mut message_reader = messenger_plus::stream::DualMessenger::new(String::from("--boundary"), String::from("--endboundary"), &mut random_reader);
+    let mut message_reader = messenger_plus::stream::DualMessenger::new(String::from("--"), String::from("bound"), String::from("endbound"), &mut random_reader);
+    let buf: &[u8] = "hello, world!".as_ref();
 
-    assert_eq!(message_reader.write(b"hello, world").unwrap(), Vec::from("--boundaryhello, world--endboundary").len());
-    assert_eq!(message_reader.write(b"hello, world").unwrap(), Vec::from("--boundaryhello, world--endboundary").len());
-    assert_eq!(message_reader.write(b"hello, world").unwrap(), Vec::from("--boundaryhello, world--endboundary").len());
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world")));
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world")));
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world")));
+    assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
+    assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
+    assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
     assert_eq!(message_reader.read_next_message(), None);
 }

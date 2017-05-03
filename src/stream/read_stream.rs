@@ -1,6 +1,8 @@
 use std::io::{Read};
+use std::mem;
 
 pub struct MessageReader<'a> {
+    delimiter_string: String,
     beginning_boundary: String,
     ending_boundary: String,
     reader: &'a mut Read,
@@ -11,8 +13,9 @@ impl<'a> MessageReader<'a> {
     /// Initializes a new MessageReader
     ///
     /// MessageReaders read a given `Read` trait-object for any messages between the given boundaries.
-    pub fn new(beg_bound: String, end_bound: String, reader: &mut Read) -> MessageReader {
+    pub fn new(delimiter_string: String, beg_bound: String, end_bound: String, reader: &mut Read) -> MessageReader {
         MessageReader {
+            delimiter_string: delimiter_string,
             beginning_boundary: beg_bound,
             ending_boundary: end_bound,
             reader: reader,
@@ -39,107 +42,66 @@ impl<'a> MessageReader<'a> {
         let mut beginning_found = false;
 
         loop {
-            // read the provided stream
-            let res = self.reader.read(&mut buffer);
-
-            // If no bytes have been sent, return None. We probably reached the end of the stream.
-            if let Ok(v) = res {
-                if v <= 0 {
-                    return None;
-                }
-            }
-
             if beginning_found {
+                println!("hunting for ending");
+                let _ = self.reader.read(message.as_mut_slice());
+                println!("message: {:?}", message);
                 // look for ending, accumulate message
-                message.append(&mut Vec::from(buffer.as_ref()));
-                if vec_contains_slice(&message, self.ending_boundary.as_ref()) {
+                let delim = self.delimiter_string.clone();
+                let end = self.ending_boundary.clone();
+                let proper_delim = delim + end.as_str();
+                println!("proper delim: {:?}", proper_delim);
+                if vec_contains_slice(&message, proper_delim.as_ref()) {
                     // end code found. filter it out and send the message.
-                    if let Some(v) = find_where_slice_begins(&message, self.ending_boundary.as_ref()) {
-                        let _ = message.split_off(v as usize);
+                    if let Some(v) = find_where_slice_begins(&message, proper_delim.as_ref()) {
+                        let other_half = message.split_off(v as usize);
+                        println!("message: {:?}, other half: {:?}", message, other_half);
                         return Some(message);
                     }
                 }
             } else {
                 // beginning message NOT found, look for it
+                // read the provided stream
+                let res = self.reader.read(&mut buffer);
+
+                // If no bytes have been sent, return None. We probably reached the end of the stream.
+                if let Ok(v) = res {
+                    if v <= 0 {
+                        return None;
+                    }
+                }
                 search_vec.append(&mut Vec::from(buffer.as_ref()));
-                if vec_contains_slice(&search_vec, self.beginning_boundary.as_ref()) {
+                println!("current search vec: {:?}", search_vec);
+                let delim = self.delimiter_string.clone();
+                let begin = self.beginning_boundary.clone();
+                let proper_delim = delim + begin.as_str();
+                if let Some(size) = locate_items_between_delimiters(&search_vec, proper_delim.as_ref(), self.delimiter_string.as_ref()) {
+                    println!("proper delim: {:?}", proper_delim);
+                    println!("size: {:?}", size);
                     // grab everything after, then push it into the message buffer
-                    if let Some(v) = find_where_slice_intersects(&search_vec, self.beginning_boundary.as_ref()) {
-                        // append the remainder found that isn't the boundary as part of the message
-                        message.append(&mut search_vec.split_off(v as usize));
-                        // mark the beginning of found
-                        beginning_found = true;
-                        // clear the search vector
-                        search_vec.clear();
+                    if let Ok(v) = String::from_utf8(size) {
+                        if let Ok(num) = str::parse::<usize>(v.as_str()) {
+                            // append the remainder found that isn't the boundary as part of the message
+                            // message.append(&mut search_vec.split_off(v as usize));
+                            // mark the beginning of found
+                            beginning_found = true;
+                            // clear the search vector
+                            search_vec.clear();
+                            // set the capacity of the message vector
+                            // by pushing requisite amount of elements
+                            let delim = self.delimiter_string.clone();
+                            let end = self.ending_boundary.clone();
+                            let end_delim = delim.as_str().to_owned() + end.as_str() + delim.as_str();
+                            for _ in 0..(num + mem::size_of_val(end_delim.as_bytes())) {
+                                message.push(0);
+                            }
+                            println!("set vec len: {:?}", message.len());
+                            // message.reserve(size.len());
+                        }
                     }
                 } 
             }
         }
-    }
-}
-
-/// Reads the next message from any Reader
-///
-/// This method reads the next message in any given reader.
-/// The message is formatted with 2 boundaries. The first boundary is defined in boundary_start, and the second is defined in boundary_end.
-///
-/// # Arguments
-/// * `stream` - a `Read` trait-object that the message will be read from
-/// * `boundary_start` - the marker of the beginning of the message. Ensure this is unique and will not be contained within the message!
-/// * `boundary_end` - the marker of the end of the message. Ensure this is unique and will not be contained within the message!
-///
-/// # Errors
-/// This method will return None if it cannot find a message and the stream ends (typically due to EOF).
-/// This method can hang if no new data is sent through the pipe as `Read` can block.
-/// This method can produce irratic results if the `boundary_start` or `boundary_end` is found within the message.
-pub fn read_next_message<T>(stream: &mut T, boundary_start: &str, boundary_end: &str) -> Option<Vec<u8>> where T: Read {
-
-    // initializes a buffer for bytes coming from the reader
-    let mut buffer = [0; 1];
-    // initializes the message buffer for containing the final message
-    let mut message: Vec<u8> = Vec::new();
-    // initializes the search buffer for placing data the program is currently searching through
-    let mut search_vec: Vec<u8> = Vec::new();
-    // whether or not the boundary_start has been found
-    let mut beginning_found = false;
-
-    loop {
-        // read the provided stream
-        let res = stream.read(&mut buffer);
-
-        // If no bytes have been sent, return None. We probably reached the end of the stream.
-        if let Ok(v) = res {
-            if v <= 0 {
-                return None;
-            }
-        }
-
-        if beginning_found {
-            // look for ending, accumulate message
-            message.append(&mut Vec::from(buffer.as_ref()));
-            if vec_contains_slice(&message, boundary_end.as_ref()) {
-                // end code found. filter it out and send the message.
-                if let Some(v) = find_where_slice_begins(&message, boundary_end.as_ref()) {
-                    let _ = message.split_off(v as usize);
-                    return Some(message);
-                }
-            }
-        } else {
-            // beginning message NOT found, look for it
-            search_vec.append(&mut Vec::from(buffer.as_ref()));
-            if vec_contains_slice(&search_vec, boundary_start.as_ref()) {
-                // grab everything after, then push it into the message buffer
-                if let Some(v) = find_where_slice_intersects(&search_vec, boundary_start.as_ref()) {
-                    // append the remainder found that isn't the boundary as part of the message
-                    message.append(&mut search_vec.split_off(v as usize));
-                    // mark the beginning of found
-                    beginning_found = true;
-                    // clear the search vector
-                    search_vec.clear();
-                }
-            } 
-        }
-
     }
 }
 
@@ -368,7 +330,7 @@ pub fn locate_items_between_delimiters<T>(vec: &Vec<T>, delimiter_slice: &[T], s
                 if cont_vec.starts_with(slice) {
                     let mut new_vec: Vec<T> = Vec::new();
                     for x in 0..vec.len() {
-                        if x > delimiter_location && x < i {
+                        if x >= (delimiter_location + delimiter_slice.len()) && x < i {
                             new_vec.push(clone_vec[x]);
                         }
                     }

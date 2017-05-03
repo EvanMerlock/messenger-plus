@@ -1,8 +1,10 @@
 use std::io::{Read, Write, Result};
-use super::{vec_contains_slice, find_where_slice_begins, find_where_slice_intersects};
+use std::mem;
+use super::{vec_contains_slice, find_where_slice_begins, locate_items_between_delimiters};
 
 #[derive(Debug)]
 pub struct DualMessenger<'a, T> where T: 'a + Read + Write {
+    delimiter_string: String,
     beginning_boundary: String,
     ending_boundary: String,
     channel: &'a mut T
@@ -13,17 +15,18 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
     /// Initializes a new MessageReader
     ///
     /// MessageReaders read a given `Read` trait-object for any messages between the given boundaries.
-    pub fn new(beg_bound: String, end_bound: String, channel: &mut T) -> DualMessenger<T> {
+    pub fn new(delimiter_string: String, beg_bound: String, end_bound: String, channel: &mut T) -> DualMessenger<T> {
         DualMessenger {
+            delimiter_string: delimiter_string,
             beginning_boundary: beg_bound,
             ending_boundary: end_bound,
             channel: channel,
         }
     }
 
-    /// Reads the next message from the DualMessenger
+    /// Reads the next message from the DualReader
     ///
-    /// This method reads the next message from the previously created DualMessenger
+    /// This method reads the next message from the previously created DualReader
     /// The message is formatted with 2 boundaries.
     ///
     /// # Errors
@@ -41,38 +44,62 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
         let mut beginning_found = false;
 
         loop {
-            // read the provided stream
-            let res = self.channel.read(&mut buffer);
-
-            // If no bytes have been sent, return None. We probably reached the end of the stream.
-            if let Ok(v) = res {
-                if v <= 0 {
-                    return None;
-                }
-            }
-
             if beginning_found {
+                println!("hunting for ending");
+                let _ = self.channel.read(message.as_mut_slice());
+                println!("message: {:?}", message);
                 // look for ending, accumulate message
-                message.append(&mut Vec::from(buffer.as_ref()));
-                if vec_contains_slice(&message, self.ending_boundary.as_ref()) {
+                let delim = self.delimiter_string.clone();
+                let end = self.ending_boundary.clone();
+                let proper_delim = delim + end.as_str();
+                println!("proper delim: {:?}", proper_delim);
+                if vec_contains_slice(&message, proper_delim.as_ref()) {
                     // end code found. filter it out and send the message.
-                    if let Some(v) = find_where_slice_begins(&message, self.ending_boundary.as_ref()) {
-                        let _ = message.split_off(v as usize);
+                    if let Some(v) = find_where_slice_begins(&message, proper_delim.as_ref()) {
+                        let other_half = message.split_off(v as usize);
+                        println!("message: {:?}, other half: {:?}", message, other_half);
                         return Some(message);
                     }
                 }
             } else {
                 // beginning message NOT found, look for it
+                // read the provided stream
+                let res = self.channel.read(&mut buffer);
+
+                // If no bytes have been sent, return None. We probably reached the end of the stream.
+                if let Ok(v) = res {
+                    if v <= 0 {
+                        return None;
+                    }
+                }
                 search_vec.append(&mut Vec::from(buffer.as_ref()));
-                if vec_contains_slice(&search_vec, self.beginning_boundary.as_ref()) {
+                println!("current search vec: {:?}", search_vec);
+                let delim = self.delimiter_string.clone();
+                let begin = self.beginning_boundary.clone();
+                let proper_delim = delim + begin.as_str();
+                if let Some(size) = locate_items_between_delimiters(&search_vec, proper_delim.as_ref(), self.delimiter_string.as_ref()) {
+                    println!("proper delim: {:?}", proper_delim);
+                    println!("size: {:?}", size);
                     // grab everything after, then push it into the message buffer
-                    if let Some(v) = find_where_slice_intersects(&search_vec, self.beginning_boundary.as_ref()) {
-                        // append the remainder found that isn't the boundary as part of the message
-                        message.append(&mut search_vec.split_off(v as usize));
-                        // mark the beginning of found
-                        beginning_found = true;
-                        // clear the search vector
-                        search_vec.clear();
+                    if let Ok(v) = String::from_utf8(size) {
+                        if let Ok(num) = str::parse::<usize>(v.as_str()) {
+                            // append the remainder found that isn't the boundary as part of the message
+                            // message.append(&mut search_vec.split_off(v as usize));
+                            // mark the beginning of found
+                            beginning_found = true;
+                            // clear the search vector
+                            search_vec.clear();
+                            // set the capacity of the message vector
+                            // by pushing requisite amount of elements
+                            let delim = self.delimiter_string.clone();
+                            let end = self.ending_boundary.clone();
+                            let end_delim = delim.as_str().to_owned() + end.as_str() + delim.as_str();
+                            for _ in 0..(num + mem::size_of_val(end_delim.as_bytes())) {
+                                message.push(0);
+                            }
+                            println!("set vec len: {:?}", message.len());
+                            // message.reserve(size.len());
+                        }
                     }
                 } 
             }
@@ -86,11 +113,16 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
 
 impl<'a, T> Write for DualMessenger<'a, T> where T: Read + Write {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        let size1 = self.channel.write(self.beginning_boundary.as_ref())?;
-        let size2 = self.channel.write(buf)?;
-        let size3 = self.channel.write(self.ending_boundary.as_ref())?;
+        let size1 = self.channel.write(self.delimiter_string.as_ref())?;
+        let size2 = self.channel.write(self.beginning_boundary.as_ref())?;
+        let size3 = self.channel.write(mem::size_of_val(buf).to_string().as_ref())?;
+        let size4 = self.channel.write(self.delimiter_string.as_ref())?;
+        let size5 = self.channel.write(buf)?;
+        let size6 = self.channel.write(self.delimiter_string.as_ref())?;
+        let size7 = self.channel.write(self.ending_boundary.as_ref())?;
+        let size8 = self.channel.write(self.delimiter_string.as_ref())?;
 
-        Ok(size1 + size2 + size3)
+        Ok(size1 + size2 + size3 + size4 + size5 + size6 + size7 + size8)
 
     }
 
