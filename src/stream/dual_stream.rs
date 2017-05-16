@@ -45,19 +45,15 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
 
         loop {
             if beginning_found {
-                println!("hunting for ending");
                 let _ = self.channel.read(message.as_mut_slice());
-                println!("message: {:?}", message);
                 // look for ending, accumulate message
                 let delim = self.delimiter_string.clone();
                 let end = self.ending_boundary.clone();
                 let proper_delim = delim + end.as_str();
-                println!("proper delim: {:?}", proper_delim);
                 if vec_contains_slice(&message, proper_delim.as_ref()) {
                     // end code found. filter it out and send the message.
                     if let Some(v) = find_where_slice_begins(&message, proper_delim.as_ref()) {
                         let other_half = message.split_off(v as usize);
-                        println!("message: {:?}, other half: {:?}", message, other_half);
                         return Some(message);
                     }
                 }
@@ -73,13 +69,10 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
                     }
                 }
                 search_vec.append(&mut Vec::from(buffer.as_ref()));
-                println!("current search vec: {:?}", search_vec);
                 let delim = self.delimiter_string.clone();
                 let begin = self.beginning_boundary.clone();
                 let proper_delim = delim + begin.as_str();
                 if let Some(size) = locate_items_between_delimiters(&search_vec, proper_delim.as_ref(), self.delimiter_string.as_ref()) {
-                    println!("proper delim: {:?}", proper_delim);
-                    println!("size: {:?}", size);
                     // grab everything after, then push it into the message buffer
                     if let Ok(v) = String::from_utf8(size) {
                         if let Ok(num) = str::parse::<usize>(v.as_str()) {
@@ -97,7 +90,6 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
                             for _ in 0..(num + mem::size_of_val(end_delim.as_bytes())) {
                                 message.push(0);
                             }
-                            println!("set vec len: {:?}", message.len());
                             // message.reserve(size.len());
                         }
                     }

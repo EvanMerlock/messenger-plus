@@ -48,12 +48,10 @@ impl<'a> MessageReader<'a> {
                 let delim = self.delimiter_string.clone();
                 let end = self.ending_boundary.clone();
                 let proper_delim = delim + end.as_str();
-                println!("proper delim: {:?}", proper_delim);
                 if vec_contains_slice(&message, proper_delim.as_ref()) {
                     // end code found. filter it out and send the message.
                     if let Some(v) = find_where_slice_begins(&message, proper_delim.as_ref()) {
                         let other_half = message.split_off(v as usize);
-                        println!("message: {:?}, other half: {:?}", message, other_half);
                         return Some(message);
                     }
                 }
@@ -77,7 +75,6 @@ impl<'a> MessageReader<'a> {
                     if let Ok(v) = String::from_utf8(size) {
                         if let Ok(num) = str::parse::<usize>(v.as_str()) {
                             // append the remainder found that isn't the boundary as part of the message
-                            // message.append(&mut search_vec.split_off(v as usize));
                             // mark the beginning of found
                             beginning_found = true;
                             // clear the search vector
@@ -90,7 +87,6 @@ impl<'a> MessageReader<'a> {
                             for _ in 0..(num + mem::size_of_val(end_delim.as_bytes())) {
                                 message.push(0);
                             }
-                            // message.reserve(size.len());
                         }
                     }
                 } 
