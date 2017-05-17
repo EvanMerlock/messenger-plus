@@ -1,6 +1,6 @@
 use std::io::{Read, Write, Result};
 use std::mem;
-use super::{vec_contains_slice, find_where_slice_begins, locate_items_between_delimiters};
+use super::super::utils::{vec_contains_slice, find_where_slice_begins, locate_items_between_delimiters};
 
 #[derive(Debug)]
 pub struct DualMessenger<'a, T> where T: 'a + Read + Write {
@@ -53,7 +53,7 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
                 if vec_contains_slice(&message, proper_delim.as_ref()) {
                     // end code found. filter it out and send the message.
                     if let Some(v) = find_where_slice_begins(&message, proper_delim.as_ref()) {
-                        let other_half = message.split_off(v as usize);
+                        let _ = message.split_off(v as usize);
                         return Some(message);
                     }
                 }

@@ -3,14 +3,4 @@ name = "messenger_plus"
 version = "0.1.0"
 authors = ["Evan Merlock <vnmrlck@gmail.com>"]
 
-[features]
-default = ["tokio"]
-
-tokio = ["bytes", "futures", "tokio-io", "tokio-proto", "tokio-service"]
-
 [dependencies]
-bytes =         { version = "0.4", optional = true }
-futures =       { version = "0.1", optional = true }
-tokio-io =      { version = "0.1", optional = true }
-tokio-proto =   { version = "0.1", optional = true }
-tokio-service = { version = "0.1", optional = true }
