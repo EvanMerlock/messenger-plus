@@ -1,5 +1,6 @@
 use std::io::{Write, Result};
 use std::mem;
+use super::stream_configuration::StreamConfiguration;
 
 pub struct MessageWriter<'a> {
     delimiter_string: String,
@@ -13,12 +14,21 @@ impl<'a> MessageWriter<'a> {
     /// Initializes a new MessageWriter
     ///
     /// MessagerWriters write to a given `Write` trait-object given the provided boundaries 
-    pub fn new(delimiter_string: String, beg_bound: String, end_bound: String, writer: &mut Write) -> MessageWriter {
+    pub fn new<T: Into<String>>(delimiter_string: T, beg_bound: T, end_bound: T, writer: &mut Write) -> MessageWriter {
         MessageWriter {
-            delimiter_string: delimiter_string,
-            beginning_boundary: beg_bound,
-            ending_boundary: end_bound,
+            delimiter_string: delimiter_string.into(),
+            beginning_boundary: beg_bound.into(),
+            ending_boundary: end_bound.into(),
             writer: writer
+        }
+    }
+
+    pub fn new_from_config(config: StreamConfiguration, writer: &mut Write) -> MessageWriter {
+        MessageWriter {
+            delimiter_string: config.delimiter_string,
+            beginning_boundary: config.beginning_boundary,
+            ending_boundary: config.ending_boundary,
+            writer: writer,
         }
     }
 }

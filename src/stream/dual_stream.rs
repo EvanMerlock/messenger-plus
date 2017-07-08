@@ -1,29 +1,39 @@
 use std::io::{Read, Write, Result};
 use std::mem;
 use super::super::utils::{vec_contains_slice, find_where_slice_begins, locate_items_between_delimiters};
+use super::stream_configuration::StreamConfiguration;
 
 #[derive(Debug)]
-pub struct DualMessenger<'a, T> where T: 'a + Read + Write {
+pub struct DualMessenger<T> where T: Read + Write {
     delimiter_string: String,
     beginning_boundary: String,
     ending_boundary: String,
-    channel: &'a mut T
+    channel: Box<T>
 }
 
-impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
+impl<T> DualMessenger<T> where T: Read + Write {
 
     /// Initializes a new MessageReader
     ///
     /// MessageReaders read a given `Read` trait-object for any messages between the given boundaries.
-    pub fn new(delimiter_string: String, beg_bound: String, end_bound: String, channel: &mut T) -> DualMessenger<T> {
+    pub fn new<V: Into<String>>(delimiter_string: V, beg_bound: V, end_bound: V, channel: T) -> DualMessenger<T> {
         DualMessenger {
-            delimiter_string: delimiter_string,
-            beginning_boundary: beg_bound,
-            ending_boundary: end_bound,
-            channel: channel,
+            delimiter_string: delimiter_string.into(),
+            beginning_boundary: beg_bound.into(),
+            ending_boundary: end_bound.into(),
+            channel: Box::new(channel),
         }
     }
 
+    pub fn new_from_config(config: StreamConfiguration, channel: T) -> DualMessenger<T> {
+        DualMessenger {
+            delimiter_string: config.delimiter_string,
+            beginning_boundary: config.beginning_boundary,
+            ending_boundary: config.ending_boundary,
+            channel: Box::new(channel),
+        }
+    }
+ 
     /// Reads the next message from the DualReader
     ///
     /// This method reads the next message from the previously created DualReader
@@ -98,12 +108,12 @@ impl<'a, T> DualMessenger<'a, T> where T: Read + Write {
         }
     }
 
-    pub fn release(mut self) -> &'a mut T {
+    pub fn release(self) -> Box<T> {
         self.channel
     }
 }
 
-impl<'a, T> Write for DualMessenger<'a, T> where T: Read + Write {
+impl<T> Write for DualMessenger<T> where T: Read + Write {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let size1 = self.channel.write(self.delimiter_string.as_ref())?;
         let size2 = self.channel.write(self.beginning_boundary.as_ref())?;
