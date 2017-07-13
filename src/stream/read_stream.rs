@@ -3,19 +3,19 @@ use std::mem;
 use super::super::utils::{vec_contains_slice, find_where_slice_begins, locate_items_between_delimiters};
 use super::stream_configuration::StreamConfiguration;
 
-pub struct MessageReader<'a> {
+pub struct MessageReader<T> where T: Read {
     delimiter_string: String,
     beginning_boundary: String,
     ending_boundary: String,
-    reader: &'a mut Read,
+    reader: T,
 }
 
-impl<'a> MessageReader<'a> {
+impl<T: Read> MessageReader<T> {
 
     /// Initializes a new MessageReader
     ///
     /// MessageReaders read a given `Read` trait-object for any messages between the given boundaries.
-    pub fn new<T: Into<String>>(delimiter_string: T, beg_bound: T, end_bound: T, reader: &mut Read) -> MessageReader {
+    pub fn new<V: Into<String>>(delimiter_string: V, beg_bound: V, end_bound: V, reader: T) -> MessageReader<T> {
         MessageReader {
             delimiter_string: delimiter_string.into(),
             beginning_boundary: beg_bound.into(),
@@ -24,13 +24,17 @@ impl<'a> MessageReader<'a> {
         }
     }
 
-    pub fn new_from_config(config: StreamConfiguration, reader: &mut Read) -> MessageReader {
+    pub fn new_from_config(config: StreamConfiguration, reader: T) -> MessageReader<T> {
         MessageReader {
             delimiter_string: config.delimiter_string,
             beginning_boundary: config.beginning_boundary,
             ending_boundary: config.ending_boundary,
             reader: reader,
         }
+    }
+
+    pub fn get_reader(&self) -> &T {
+        &self.reader
     }
 
     /// Reads the next message from the MessageReader

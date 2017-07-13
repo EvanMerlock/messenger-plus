@@ -2,19 +2,19 @@ use std::io::{Write, Result};
 use std::mem;
 use super::stream_configuration::StreamConfiguration;
 
-pub struct MessageWriter<'a> {
+pub struct MessageWriter<T> where T: Write {
     delimiter_string: String,
     beginning_boundary: String,
     ending_boundary: String,
-    writer: &'a mut Write,
+    writer: T,
 }
 
-impl<'a> MessageWriter<'a> {
+impl<T: Write> MessageWriter<T> {
 
     /// Initializes a new MessageWriter
     ///
     /// MessagerWriters write to a given `Write` trait-object given the provided boundaries 
-    pub fn new<T: Into<String>>(delimiter_string: T, beg_bound: T, end_bound: T, writer: &mut Write) -> MessageWriter {
+    pub fn new<V: Into<String>>(delimiter_string: V, beg_bound: V, end_bound: V, writer: T) -> MessageWriter<T> {
         MessageWriter {
             delimiter_string: delimiter_string.into(),
             beginning_boundary: beg_bound.into(),
@@ -23,7 +23,7 @@ impl<'a> MessageWriter<'a> {
         }
     }
 
-    pub fn new_from_config(config: StreamConfiguration, writer: &mut Write) -> MessageWriter {
+    pub fn new_from_config(config: StreamConfiguration, writer: T) -> MessageWriter<T> {
         MessageWriter {
             delimiter_string: config.delimiter_string,
             beginning_boundary: config.beginning_boundary,
@@ -31,9 +31,13 @@ impl<'a> MessageWriter<'a> {
             writer: writer,
         }
     }
+
+    pub fn get_writer(&self) -> &T {
+        &self.writer
+    }
 }
 
-impl<'a> Write for MessageWriter<'a> {
+impl<T: Write> Write for MessageWriter<T> {
     
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let size1 = self.writer.write(self.delimiter_string.as_ref())?;

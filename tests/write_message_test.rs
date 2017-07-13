@@ -38,12 +38,10 @@ impl Write for RandomWrite {
 fn writes_message_properly() {
     let mut writer = RandomWrite::new();
     let buf: &[u8] = "hello, world!".as_ref();
-    {
-        let mut message_writer = messenger_plus::stream::MessageWriter::new(String::from("--"), String::from("bound"), String::from("endbound"), &mut writer);
-        let _ = message_writer.write(buf);
-    }
+    let mut message_writer = messenger_plus::stream::MessageWriter::new("--", "bound", "endbound", writer);
+    let _ = message_writer.write(buf);
 
     let payload_vec = Vec::from(String::from("--bound").add(mem::size_of_val(buf).to_string().as_str()).add("--hello, world!--endbound--"));
 
-    assert_eq!(writer.info, payload_vec);
+    assert_eq!(message_writer.get_writer().info, payload_vec);
 }
