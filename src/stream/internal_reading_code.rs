@@ -79,19 +79,13 @@ pub fn read_message_from_reader(reader: &mut Read, delimiter_string: String, end
     // the total size of the beginning of the delimiter (delimiter_string)
     let mut delimiter_sized_vec = create_empty_vec_of_size(mem::size_of_val(delimiter_string.as_bytes()));
     // read the beginning from the reader
-    let res = reader.read(delimiter_sized_vec.as_mut_slice());
-
-    if let Ok(v) = res {
-        if v <= 0 {
-            return None;
-        }
-    }
+    let _ = reader.read_exact(delimiter_sized_vec.as_mut_slice());
 
     // if the delimiter is equal to the string
     if delimiter_sized_vec.as_slice() == delimiter_string.as_bytes() {
         // read the beginning boundary from the reader
         let mut beg_bound_sized_vec = create_empty_vec_of_size(mem::size_of_val(beginning_boundary.as_bytes()));
-        let _ = reader.read(beg_bound_sized_vec.as_mut_slice());
+        let _ = reader.read_exact(beg_bound_sized_vec.as_mut_slice());
         // if it matches
         if beg_bound_sized_vec.as_slice() == beginning_boundary.as_bytes() {
             // start scanning for the byte size
@@ -100,7 +94,7 @@ pub fn read_message_from_reader(reader: &mut Read, delimiter_string: String, end
             // while we haven't found delimiter_string
             while !contains_delimiter {
                 // read one byte at a time
-                reader.read(&mut buffer);
+                reader.read_exact(&mut buffer);
                 // push the byte to the acc_buffer
                 acc_buff.push(buffer[0]);
                 // if the acc_buffer ends with the delimiter string
@@ -117,19 +111,29 @@ pub fn read_message_from_reader(reader: &mut Read, delimiter_string: String, end
                                 // create the message vector
                                 let mut message_vec = create_empty_vec_of_size(num);
                                 // this is the message, read the remainder
-                                reader.read(message_vec.as_mut_slice());
+                                reader.read_exact(message_vec.as_mut_slice());
 
                                 // trash the remaining message
                                 let remaining_bytes = (mem::size_of_val(delimiter_string.as_bytes()) * 2) + mem::size_of_val(ending_boundary.as_bytes());
                                 let mut trash_vec = create_empty_vec_of_size(remaining_bytes);
-                                reader.read(trash_vec.as_mut_slice());
+                                reader.read_exact(trash_vec.as_mut_slice());
                                 return Some(message_vec);
+                            } else {
+                                println!("couldn't parse string as usize");
                             }
+                        } else {
+                            println!("non-utf8 input given")
                         }
+                    } else {
+                        println!("something went wrong, acc_buff doesnt contain delim but ends_with reported it does");
                     }
                 }
             }
+        } else {
+            println!("something went wrong, beg != beg");
         }
+    } else {
+        println!("something went wrong, {:?} != {:?}", delimiter_string, String::from_utf8(delimiter_sized_vec));
     }
     return None;
 }
