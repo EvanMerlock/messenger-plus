@@ -8,4 +8,5 @@ pub use self::read_stream::*;
 pub use self::write_stream::*;
 pub use self::dual_stream::*;
 pub use self::stream_configuration::*;
+#[doc(hidden)]
 pub(crate) use self::internal_reading_code::*;
