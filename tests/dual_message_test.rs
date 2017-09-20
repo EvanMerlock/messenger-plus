@@ -1,4 +1,5 @@
 extern crate messenger_plus;
+use messenger_plus::stream;
 
 use std::io::{Read, Write, Result};
 
@@ -52,8 +53,8 @@ fn dual_messenger_test() {
 
 
     assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
-    assert_eq!(message_reader.read_next_message(), None);
+    assert_eq!(message_reader.read_next_message(), Ok(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), Err(stream::Error::from(stream::ErrorKind::BufferEmpty)));
 }
 
 #[test]
@@ -65,10 +66,10 @@ fn dual_message_multi_test() {
     assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
     assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
     assert_eq!(message_reader.write(buf).unwrap(), Vec::from("--bound12--hello, world!--endbound--").len());
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
-    assert_eq!(message_reader.read_next_message(), None);
+    assert_eq!(message_reader.read_next_message(), Ok(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), Ok(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), Ok(Vec::from("hello, world!")));
+    assert_eq!(message_reader.read_next_message(), Err(stream::Error::from(stream::ErrorKind::BufferEmpty)));
 }
 
 #[test]
@@ -82,7 +83,7 @@ fn dual_message_large_multi_test() {
     }
 
     for _ in 0..1000 {
-        assert_eq!(message_reader.read_next_message(), Some(Vec::from("hello, world!")));
+        assert_eq!(message_reader.read_next_message(), Ok(Vec::from("hello, world!")));
     }
-    assert_eq!(message_reader.read_next_message(), None);
+    assert_eq!(message_reader.read_next_message(), Err(stream::Error::from(stream::ErrorKind::BufferEmpty)));
 }

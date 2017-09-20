@@ -1,7 +1,6 @@
 use std::io::{Read};
-use std::mem;
 use super::stream_configuration::StreamConfiguration;
-use super::read_message_from_reader;
+use super::{read_message_from_reader, Result};
 
 pub struct MessageReader<T> where T: Read {
     delimiter_string: String,
@@ -43,10 +42,10 @@ impl<T: Read> MessageReader<T> {
     /// The message is formatted with 2 boundaries.
     ///
     /// # Errors
-    /// This method will return None if it cannot find a message and the stream ends (typically due to EOF).
+    /// This method will return Err if it cannot find a message and the stream ends (typically due to EOF).
     /// This method can hang if no new data is sent through the pipe as `Read` can block.
     /// This method can produce irratic results if the `boundary_start` or `boundary_end` is found within the message.
-    pub fn read_next_message(&mut self) -> Option<Vec<u8>> {
+    pub fn read_next_message(&mut self) -> Result<Vec<u8>> {
         read_message_from_reader(&mut self.reader, self.delimiter_string.clone(), self.ending_boundary.clone(), self.beginning_boundary.clone())
     }
 }

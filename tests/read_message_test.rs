@@ -1,5 +1,7 @@
 extern crate messenger_plus;
 
+use messenger_plus::stream;
+
 use std::io;
 use std::mem;
 
@@ -45,7 +47,7 @@ fn read_next_message_test() {
 
     let mut message_reader: messenger_plus::stream::MessageReader<RandomRead> = messenger_plus::stream::MessageReader::new("--", "boundary", "endboundary", data);
 
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from(payload_one)));
+    assert_eq!(message_reader.read_next_message(), Ok(Vec::from(payload_one)));
 }
 
 #[test]
@@ -54,7 +56,7 @@ fn special_characters_test() {
     let mut data = RandomRead::new(payload_one, 1);
     let mut message_reader: messenger_plus::stream::MessageReader<RandomRead> = messenger_plus::stream::MessageReader::new("--", "boundary", "endboundary", data);
 
-    assert_eq!(message_reader.read_next_message(), Some(Vec::from(payload_one)));
+    assert_eq!(message_reader.read_next_message(), Ok(Vec::from(payload_one)));
 }
 
 #[test]
@@ -66,7 +68,7 @@ fn read_multiple_payloads_test() {
     let mut message_reader: messenger_plus::stream::MessageReader<RandomRead> = messenger_plus::stream::MessageReader::new("--", "boundary", "endboundary", data);
 
     for _ in 0..num_payloads {
-        assert_eq!(message_reader.read_next_message(), Some(Vec::from(payload_one)));
+        assert_eq!(message_reader.read_next_message(), Ok(Vec::from(payload_one)));
     }
 }
 
@@ -75,5 +77,5 @@ fn read_empty_payload_test() {
     let mut data = RandomRead::new("", 0);
     let mut message_reader: messenger_plus::stream::MessageReader<RandomRead> = messenger_plus::stream::MessageReader::new("--", "boundary", "endboundary", data);
 
-    assert_eq!(message_reader.read_next_message(), None);
+    assert_eq!(message_reader.read_next_message(), Err(stream::Error::from(stream::ErrorKind::BufferEmpty)));
 }

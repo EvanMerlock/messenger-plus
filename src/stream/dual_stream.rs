@@ -1,7 +1,8 @@
-use std::io::{Read, Write, Result};
+use std::io::{Read, Write};
+use std::io;
 use std::mem;
 use super::stream_configuration::StreamConfiguration;
-use super::read_message_from_reader;
+use super::{read_message_from_reader, Result};
 
 #[derive(Debug)]
 pub struct DualMessenger<T> where T: Read + Write {
@@ -43,7 +44,7 @@ impl<T> DualMessenger<T> where T: Read + Write {
     /// This method will return None if it cannot find a message and the stream ends (typically due to EOF).
     /// This method can hang if no new data is sent through the pipe as `Read` can block.
     /// This method can produce irratic results if the `boundary_start` or `boundary_end` is found within the message.
-    pub fn read_next_message(&mut self) -> Option<Vec<u8>> {
+    pub fn read_next_message(&mut self) -> Result<Vec<u8>> {
          read_message_from_reader(self.channel.as_mut(), self.delimiter_string.clone(), self.ending_boundary.clone(), self.beginning_boundary.clone())
     }
 
@@ -53,7 +54,7 @@ impl<T> DualMessenger<T> where T: Read + Write {
 }
 
 impl<T> Write for DualMessenger<T> where T: Read + Write {
-    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         let size1 = self.channel.write(self.delimiter_string.as_ref())?;
         let size2 = self.channel.write(self.beginning_boundary.as_ref())?;
         let size3 = self.channel.write(mem::size_of_val(buf).to_string().as_ref())?;
@@ -67,7 +68,7 @@ impl<T> Write for DualMessenger<T> where T: Read + Write {
 
     }
 
-    fn flush(&mut self) -> Result<()> {
+    fn flush(&mut self) -> io::Result<()> {
         self.channel.flush()
     }
 }
