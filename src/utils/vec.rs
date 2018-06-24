@@ -55,6 +55,13 @@ pub fn vec_contains_slice<T>(vec: &Vec<T>, slice: &[T]) -> bool where T: Copy + 
     false
 }
 
+pub fn slice_contains_slice<V>(check: &[V], slice: &[V]) -> bool where V: PartialEq {
+    check
+        .windows(slice.len())
+        .filter(|&x| x == slice)
+        .count() > 1
+}
+
 /// Returns the index of the element AFTER the slice if the slice exists within the vector
 ///
 /// # Arguments
